@@ -167,13 +167,11 @@ class BaseViz(object):
         extras = {
             'where': form_data.get("where", ''),
             'having': form_data.get("having", ''),
-            'having_druid': form_data.get('having_filters') \
-                if 'having_filters' in form_data else [],
+            'having_druid': form_data.get('having_filters', []),
             'time_grain_sqla': form_data.get("time_grain_sqla", ''),
             'druid_time_origin': form_data.get("druid_time_origin", ''),
         }
-        filters = form_data['filters'] if 'filters' in form_data \
-                else []
+        filters = form_data.get('filters', [])
         for col, vals in self.get_extra_filters().items():
             if not (col and vals) or col.startswith('__'):
                 continue
@@ -232,7 +230,7 @@ class BaseViz(object):
             payload = cache.get(cache_key)
 
         if payload:
-            stats_logger.incr('loaded_from_source')
+            stats_logger.incr('loaded_from_cache')
             is_cached = True
             try:
                 cached_data = zlib.decompress(payload)
@@ -246,7 +244,7 @@ class BaseViz(object):
             logging.info("Serving from cache")
 
         if not payload:
-            stats_logger.incr('loaded_from_cache')
+            stats_logger.incr('loaded_from_source')
             data = None
             is_cached = False
             cache_timeout = self.cache_timeout
@@ -842,16 +840,11 @@ class NVD3TimeSeriesViz(NVD3Viz):
             ys = series[name]
             if df[name].dtype.kind not in "biufc":
                 continue
-            if isinstance(name, string_types):
-                series_title = name
-            else:
-                name = ["{}".format(s) for s in name]
-                if len(self.form_data.get('metrics')) > 1:
-                    series_title = ", ".join(name)
-                else:
-                    series_title = ", ".join(name[1:])
-            if title_suffix:
+            series_title = name
+            if isinstance(series_title, string_types):
                 series_title += title_suffix
+            elif title_suffix and isinstance(series_title, list):
+                series_title.append(title_suffix)
 
             d = {
                 "key": series_title,
@@ -1315,7 +1308,6 @@ class CountryMapViz(BaseViz):
         return qry
 
     def get_data(self, df):
-        from superset.data import countries
         fd = self.form_data
         cols = [fd.get('entity')]
         metric = fd.get('metric')
@@ -1487,9 +1479,9 @@ class HeatmapViz(BaseViz):
         max_ = df.v.max()
         min_ = df.v.min()
         bounds = fd.get('y_axis_bounds')
-        if bounds and bounds[0]:
+        if bounds and bounds[0] is not None:
             min_ = bounds[0]
-        if bounds and bounds[1]:
+        if bounds and bounds[1] is not None:
             max_ = bounds[1]
         if norm == 'heatmap':
             overall = True
@@ -1657,6 +1649,65 @@ class EventFlowViz(BaseViz):
         return df.to_dict(orient="records")
 
 
+class PairedTTestViz(BaseViz):
+
+    """A table displaying paired t-test values"""
+
+    viz_type = 'paired_ttest'
+    verbose_name = _("Time Series - Paired t-test")
+    sort_series = False
+    is_timeseries = True
+
+    def get_data(self, df):
+        """
+        Transform received data frame into an object of the form:
+        {
+            "metric1": [
+                {
+                    groups: ('groupA', ... ),
+                    values: [ {x, y}, ... ],
+                }, ...
+            ], ...
+        }
+        """
+        fd = self.form_data
+        groups = fd.get('groupby')
+        metrics = fd.get('metrics')
+        df.fillna(0)
+        df = df.pivot_table(
+            index=DTTM_ALIAS,
+            columns=groups,
+            values=metrics)
+        cols = []
+        # Be rid of falsey keys
+        for col in df.columns:
+            if col == '':
+                cols.append('N/A')
+            elif col is None:
+                cols.append('NULL')
+            else:
+                cols.append(col)
+        df.columns = cols
+        data = {}
+        series = df.to_dict('series')
+        for nameSet in df.columns:
+            # If no groups are defined, nameSet will be the metric name
+            hasGroup = not isinstance(nameSet, string_types)
+            Y = series[nameSet]
+            d = {
+                'group': nameSet[1:] if hasGroup else 'All',
+                'values': [
+                    {'x': t, 'y': Y[t] if t in Y else None}
+                    for t in df.index
+                ],
+            }
+            key = nameSet[0] if hasGroup else nameSet
+            if key in data:
+                data[key].append(d)
+            else:
+                data[key] = [d]
+        return data
+
 
 viz_types_list = [
     TableViz,
@@ -1692,6 +1743,7 @@ viz_types_list = [
     HistogramViz,
     SeparatorViz,
     EventFlowViz,
+    PairedTTestViz,
 ]
 
 viz_types = OrderedDict([(v.viz_type, v) for v in viz_types_list
