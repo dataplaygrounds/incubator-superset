@@ -168,6 +168,7 @@ Who uses Apache Superset (incubating)?
 Here's a list of organizations who have taken the time to send a PR to let
 the world know they are using Superset. Join our growing community!
 
+ - [AiHello](https://www.aihello.com)
  - [Airbnb](https://github.com/airbnb)
  - [Amino](https://amino.com)
  - [Brilliant.org](https://brilliant.org/)
@@ -181,6 +182,7 @@ the world know they are using Superset. Join our growing community!
  - [GfK Data Lab](http://datalab.gfk.com)
  - [Konfío](http://konfio.mx)
  - [Maieutical Labs](https://cloudschooling.it)
+ - [Pronto Tools](http://www.prontotools.io)
  - [Qunar](https://www.qunar.com/)
  - [Shopee](https://shopee.sg)
  - [Shopkick](https://www.shopkick.com)
