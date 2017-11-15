@@ -22,6 +22,13 @@
       "valueKey": "metric_name",
       "description": "One or many metrics to display"
     },
+    "percent_metrics": {
+      "type": "SelectControl",
+      "multi": true,
+      "label": "Percentage Metrics",
+      "valueKey": "metric_name",
+      "description": "Metrics for which percentage of total are to be displayed"
+    },
     "y_axis_bounds": {
       "type": "BoundsControl",
       "label": "Y Axis Bounds",
@@ -38,6 +45,16 @@
       "label": "Ordering",
       "default": [],
       "description": "One or many metrics to display"
+    },
+    "annotation_layers": {
+      "type": "SelectAsyncControl",
+      "multi": true,
+      "label": "Annotation Layers",
+      "default": [],
+      "description": "Annotation layers to overlay on the visualization",
+      "dataEndpoint": "/annotationlayermodelview/api/read?",
+      "placeholder": "Select a annotation layer",
+      "onAsyncErrorMessage": "Error while fetching annotation layers"
     },
     "metric": {
       "type": "SelectControl",
@@ -86,19 +103,19 @@
       "choices": [
         [
           "alpha_asc",
-          "Alphabetical ascending"
+          "Axis ascending"
         ],
         [
           "alpha_desc",
-          "Alphabetical descending"
+          "Axis descending"
         ],
         [
           "value_asc",
-          "Value ascending"
+          "sum(value) ascending"
         ],
         [
           "value_desc",
-          "Value descending"
+          "sum(value) descending"
         ]
       ],
       "clearable": false,
@@ -110,19 +127,19 @@
       "choices": [
         [
           "alpha_asc",
-          "Alphabetical ascending"
+          "Axis ascending"
         ],
         [
           "alpha_desc",
-          "Alphabetical descending"
+          "Axis descending"
         ],
         [
           "value_asc",
-          "Value ascending"
+          "sum(value) ascending"
         ],
         [
           "value_desc",
-          "Value descending"
+          "sum(value) descending"
         ]
       ],
       "clearable": false,
@@ -147,6 +164,10 @@
         [
           "black_white",
           "black/white"
+        ],
+        [
+          "dark_blue",
+          "light/dark blue"
         ]
       ],
       "default": "blue_white_yellow",
@@ -172,6 +193,13 @@
         "black_white": [
           "black",
           "white"
+        ],
+        "dark_blue": [
+          "#EBF5F8",
+          "#6BB1CC",
+          "#357E9B",
+          "#1B4150",
+          "#092935"
         ]
       },
       "isLinear": true
@@ -1161,7 +1189,8 @@
     "granularity_sqla": {
       "type": "SelectControl",
       "label": "Time Column",
-      "description": "The time column for the visualization. Note that you can define arbitrary expression that return a DATETIME column in the table or. Also note that the filter below is applied against this column or expression"
+      "description": "The time column for the visualization. Note that you can define arbitrary expression that return a DATETIME column in the table or. Also note that the filter below is applied against this column or expression",
+      "freeForm": true
     },
     "time_grain_sqla": {
       "type": "SelectControl",
@@ -1833,6 +1862,36 @@
       ],
       "description": "D3 format syntax: https://github.com/d3/d3-format"
     },
+    "date_time_format": {
+      "type": "SelectControl",
+      "freeForm": true,
+      "label": "Date Time Format",
+      "renderTrigger": true,
+      "default": "smart_date",
+      "choices": [
+        [
+          "smart_date",
+          "Adaptative formating"
+        ],
+        [
+          "%m/%d/%Y",
+          "%m/%d/%Y | 01/14/2019"
+        ],
+        [
+          "%Y-%m-%d",
+          "%Y-%m-%d | 2019-01-14"
+        ],
+        [
+          "%Y-%m-%d %H:%M:%S",
+          "%Y-%m-%d %H:%M:%S | 2019-01-14 01:32:10"
+        ],
+        [
+          "%H:%M:%S",
+          "%H:%M:%S | 01:32:10"
+        ]
+      ],
+      "description": "D3 format syntax: https://github.com/d3/d3-format"
+    },
     "markup_type": {
       "type": "SelectControl",
       "label": "Markup Type",
@@ -1922,6 +1981,14 @@
         [
           "percent",
           "Percentage"
+        ],
+        [
+          "key_value",
+          "Category and Value"
+        ],
+        [
+          "key_percent",
+          "Category and Percentage"
         ]
       ],
       "description": "What should be shown on the label?"
@@ -2003,6 +2070,30 @@
       "default": false,
       "description": "Whether to include a time filter"
     },
+    "show_sqla_time_granularity": {
+      "type": "CheckboxControl",
+      "label": "Show SQL Granularity Dropdown",
+      "default": false,
+      "description": "Check to include SQL Granularity dropdown"
+    },
+    "show_sqla_time_column": {
+      "type": "CheckboxControl",
+      "label": "Show SQL Time Column",
+      "default": false,
+      "description": "Check to include Time Column dropdown"
+    },
+    "show_druid_time_granularity": {
+      "type": "CheckboxControl",
+      "label": "Show Druid Granularity Dropdown",
+      "default": false,
+      "description": "Check to include Druid Granularity dropdown"
+    },
+    "show_druid_time_origin": {
+      "type": "CheckboxControl",
+      "label": "Show Druid Time Origin",
+      "default": false,
+      "description": "Check to include Time Origin dropdown"
+    },
     "show_datatable": {
       "type": "CheckboxControl",
       "label": "Data Table",
@@ -2035,6 +2126,13 @@
       "renderTrigger": true,
       "default": true,
       "description": "Whether to display the legend (toggles)"
+    },
+    "show_values": {
+      "type": "CheckboxControl",
+      "label": "Show Values",
+      "renderTrigger": true,
+      "default": false,
+      "description": "Whether to display the numerical values within the cells"
     },
     "x_axis_showminmax": {
       "type": "CheckboxControl",
@@ -2070,6 +2168,13 @@
       "default": false,
       "renderTrigger": true,
       "description": "Use a log scale for the X axis"
+    },
+    "log_scale": {
+      "type": "CheckboxControl",
+      "label": "Log Scale",
+      "default": false,
+      "renderTrigger": true,
+      "description": "Use a log scale"
     },
     "donut": {
       "type": "CheckboxControl",
@@ -2308,6 +2413,11 @@
         ]
       ],
       "description": "The color for points and clusters in RGB"
+    },
+    "color": {
+      "type": "ColorPickerControl",
+      "label": "Color",
+      "description": "Pick a color"
     },
     "ranges": {
       "type": "TextControl",
@@ -2597,6 +2707,105 @@
           "#3b3eac"
         ]
       }
+    },
+    "significance_level": {
+      "type": "TextControl",
+      "label": "Significance Level",
+      "default": 0.05,
+      "description": "Threshold alpha level for determining significance"
+    },
+    "pvalue_precision": {
+      "type": "TextControl",
+      "label": "p-value precision",
+      "default": 6,
+      "description": "Number of decimal places with which to display p-values"
+    },
+    "liftvalue_precision": {
+      "type": "TextControl",
+      "label": "Lift percent precision",
+      "default": 4,
+      "description": "Number of decimal places with which to display lift values"
+    },
+    "column_collection": {
+      "type": "CollectionControl",
+      "label": "Time Series Columns",
+      "validators": [
+        null
+      ],
+      "controlName": "TimeSeriesColumnControl"
+    },
+    "time_series_option": {
+      "type": "SelectControl",
+      "label": "Options",
+      "validators": [
+        null
+      ],
+      "default": "not_time",
+      "valueKey": "value",
+      "options": [
+        {
+          "label": "Not Time Series",
+          "value": "not_time",
+          "description": "Ignore time"
+        },
+        {
+          "label": "Time Series",
+          "value": "time_series",
+          "description": "Standard time series"
+        },
+        {
+          "label": "Aggregate Mean",
+          "value": "agg_mean",
+          "description": "Mean of values over specified period"
+        },
+        {
+          "label": "Aggregate Sum",
+          "value": "agg_sum",
+          "description": "Sum of values over specified period"
+        },
+        {
+          "label": "Difference",
+          "value": "point_diff",
+          "description": "Metric change in value from `since` to `until`"
+        },
+        {
+          "label": "Percent Change",
+          "value": "point_percent",
+          "description": "Metric percent change in value from `since` to `until`"
+        },
+        {
+          "label": "Factor",
+          "value": "point_factor",
+          "description": "Metric factor change from `since` to `until`"
+        },
+        {
+          "label": "Advanced Analytics",
+          "value": "adv_anal",
+          "description": "Use the Advanced Analytics options below"
+        }
+      ],
+      "description": "Settings for time series"
+    },
+    "equal_date_size": {
+      "type": "CheckboxControl",
+      "label": "Equal Date Sizes",
+      "default": true,
+      "renderTrigger": true,
+      "description": "Check to force date partitions to have the same height"
+    },
+    "partition_limit": {
+      "type": "TextControl",
+      "label": "Partition Limit",
+      "isInt": true,
+      "default": "5",
+      "description": "The maximum number of subdivisions of each group; lower values are pruned first"
+    },
+    "partition_threshold": {
+      "type": "TextControl",
+      "label": "Partition Threshold",
+      "isFloat": true,
+      "default": "0.05",
+      "description": "Partitions whose height to parent height proportions are below this value are pruned"
     }
   }
 }

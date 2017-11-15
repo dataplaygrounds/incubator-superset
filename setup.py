@@ -17,6 +17,7 @@ def get_git_sha():
     except:
         return ""
 
+
 GIT_SHA = get_git_sha()
 version_info = {
     'GIT_SHA': GIT_SHA,
@@ -29,7 +30,6 @@ print("-==-" * 15)
 
 with open(os.path.join(PACKAGE_DIR, 'version_info.json'), 'w') as version_file:
     json.dump(version_info, version_file)
-
 
 setup(
     name='superset',
