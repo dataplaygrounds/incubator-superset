@@ -87,8 +87,8 @@ function viz(slice, payload) {
           display: (
             <WithTooltip
               renderTooltip={({ index }) => (
-                <div style={{ minWidth: 140 }}>
-                  <strong>{d3format(c.d3format, data[index][metric])}</strong>
+                <div>
+                  <strong>{d3format(c.d3format, sparkData[index])}</strong>
                   <div>{formatDate(data[index].iso)}</div>
                 </div>
               )}
@@ -140,7 +140,7 @@ function viz(slice, payload) {
         } else if (c.colType === 'contrib') {
           // contribution to column total
           v = recent / Object.keys(reversedData[0])
-          .map(k => reversedData[0][k])
+          .map(k => k !== 'iso' ? reversedData[0][k] : null)
           .reduce((a, b) => a + b);
         } else if (c.colType === 'avg') {
           // Average over the last {timeLag}
